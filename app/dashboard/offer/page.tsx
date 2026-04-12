@@ -54,8 +54,12 @@ export default function OfferRidePage() {
   const [stops, setStops] = useState<Stop[]>(makeDefaultStops('to_office'))
 
   function changeDirection(dir: 'to_office' | 'from_office') {
-    setForm((f) => ({ ...f, direction: dir }))
-    setStops(makeDefaultStops(dir))
+    setForm((f) => {
+      const newStops = makeDefaultStops(dir)
+      newStops[0] = { ...newStops[0], time: f.departureTime }
+      setStops(newStops)
+      return { ...f, direction: dir }
+    })
   }
 
   function addStop() {
@@ -88,6 +92,9 @@ export default function OfferRidePage() {
     setStops((prev) =>
       prev.map((stop, i) => (i === index ? { ...stop, [field]: value } : stop))
     )
+    if (index === 0 && field === 'time') {
+      setForm((f) => ({ ...f, departureTime: value }))
+    }
   }
 
   // Returns the set of location names already chosen in the variable stops
@@ -185,7 +192,11 @@ export default function OfferRidePage() {
                 id="departureTime"
                 type="time"
                 value={form.departureTime}
-                onChange={(e) => setForm((f) => ({ ...f, departureTime: e.target.value }))}
+                onChange={(e) => {
+                  const t = e.target.value
+                  setForm((f) => ({ ...f, departureTime: t }))
+                  setStops((prev) => prev.map((s, i) => i === 0 ? { ...s, time: t } : s))
+                }}
                 required
                 className="h-10"
               />
@@ -227,27 +238,29 @@ export default function OfferRidePage() {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="totalSeats">Available seats</Label>
-              <Input
-                id="totalSeats"
-                type="number"
-                min={1}
-                max={6}
-                value={form.totalSeats}
-                onChange={(e) => setForm((f) => ({ ...f, totalSeats: parseInt(e.target.value) }))}
+              <Select
+                value={String(form.totalSeats)}
+                onValueChange={(val) => setForm((f) => ({ ...f, totalSeats: parseInt(val) }))}
                 required
-                className="h-10"
-              />
+              >
+                <SelectTrigger id="totalSeats" className="h-10">
+                  <SelectValue placeholder="Select seats" />
+                </SelectTrigger>
+                <SelectContent>
+                  {[1, 2, 3, 4].map((n) => (
+                    <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="fare">Fare per seat (₹)</Label>
               <Input
                 id="fare"
                 type="number"
-                min={0}
-                value={form.fare}
-                onChange={(e) => setForm((f) => ({ ...f, fare: parseInt(e.target.value) }))}
-                required
-                className="h-10"
+                value={100}
+                readOnly
+                className="h-10 bg-muted text-muted-foreground cursor-not-allowed"
               />
             </div>
           </div>
