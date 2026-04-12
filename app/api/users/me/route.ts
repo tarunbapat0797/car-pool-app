@@ -33,6 +33,7 @@ export async function PATCH(req: NextRequest) {
       userId: updated._id.toString(),
       email: updated.email,
       name: updated.name,
+      phone: updated.phone ?? '',
       role: updated.role,
     })
     await setAuthCookie(newToken)

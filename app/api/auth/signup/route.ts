@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       userId: user._id.toString(),
       email: user.email,
       name: user.name,
+      phone: user.phone ?? '',
       role: user.role,
     })
 
