@@ -1,36 +1,122 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Carpool App
 
-## Getting Started
+An office carpool coordination app for small teams (~10–15 people). Anyone can offer a ride or book a seat — no separate driver/rider accounts. Built as a free-tier MVP on Vercel + MongoDB Atlas.
 
-First, run the development server:
+## Features
+
+- **Offer a ride** — set date, direction (to/from office), stops with times, seats, and fare
+- **Browse & book rides** — filter by date, direction, or stop; book a seat in one tap
+- **Manage bookings** — view your upcoming rides and cancel if plans change
+- **Profile** — update your name, phone number
+- **Auth** — email/password signup and login with JWT stored in an httpOnly cookie
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 + shadcn/ui |
+| Database | MongoDB via Mongoose 9 |
+| Auth | JWT (jsonwebtoken + bcryptjs) |
+| Forms | react-hook-form + zod |
+| Toasts | sonner |
+
+## Prerequisites
+
+- Node.js 20+
+- A MongoDB connection string (MongoDB Atlas free tier works)
+
+## Local Setup
+
+1. **Clone the repo**
+
+   ```bash
+   git clone <repo-url>
+   cd carpool-app
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+
+   Create a `.env.local` file in the project root:
+
+   ```env
+   MONGO_DB_URI=mongodb+srv://<user>:<password>@cluster.mongodb.net/carpool
+   JWT_SECRET=your-secret-key-min-32-chars
+   ```
+
+4. **Run the development server**
+
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Available Scripts
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run dev      # Start development server (hot reload)
+npm run build    # Type-check and build for production
+npm run start    # Start production server (after build)
+npm run lint     # Run ESLint
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Project Structure
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+app/
+  (auth)/          — Login and signup pages (public)
+  dashboard/       — Protected app shell
+    offer/         — Create a new ride
+    bookings/      — View and cancel your bookings
+    profile/       — Edit your profile
+  api/
+    auth/          — login, signup, logout, me
+    rides/         — list, create, cancel rides
+    rides/[id]/book/ — book a seat
+    bookings/      — list bookings
+    bookings/[id]/cancel/ — cancel a booking
+    users/me/      — update profile
+lib/
+  auth.ts          — JWT helpers and cookie utilities
+  db.ts            — Mongoose connection singleton
+  models/          — User, Ride, Booking schemas
+components/ui/     — shadcn/ui primitives
+proxy.ts           — Route protection (Next.js 16 middleware)
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Data Model Overview
 
-## Learn More
+- **User** — name, email, phone, hashed password, role (`user` | `admin`)
+- **Ride** — driver, date, departure time (IST), direction (`to_office` | `from_office`), stops, total/booked seats, fare, status (`open` | `full` | `cancelled` | `completed`)
+- **Booking** — ride, rider, pickup stop, drop stop, status (`confirmed` | `cancelled` | `no_show`), payment status
 
-To learn more about Next.js, take a look at the following resources:
+## Key Business Rules
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Rides can only be offered up to 7 days in advance
+- You cannot book your own ride
+- You cannot offer a ride if you already have a confirmed booking for the same date and direction
+- Departed rides are hidden from other users but remain visible to the driver
+- Ride status automatically flips to `full` when all seats are booked
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deployment
 
-## Deploy on Vercel
+The app is designed to deploy on **Vercel** with zero configuration:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push the repo to GitHub
+2. Import the project in [Vercel](https://vercel.com)
+3. Add `MONGO_DB_URI` and `JWT_SECRET` as environment variables in the Vercel dashboard
+4. Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Contributing
+
+1. Fork the repo and create a feature branch
+2. Read [CLAUDE.md](./CLAUDE.md) for architecture decisions and Next.js 16 gotchas before writing code
+3. Run `npm run build` to confirm no type errors before opening a PR
