@@ -39,7 +39,26 @@ export async function POST(
       return Response.json({ error: 'This ride has already departed' }, { status: 409 })
     }
 
-    // Check for existing booking
+    // Prevent booking a second ride for the same date + direction
+    const conflictingBooking = await Booking.findOne({
+      riderId: user.userId,
+      status: 'confirmed',
+      rideId: {
+        $in: await Ride.find({
+          date: ride.date,
+          direction: ride.direction,
+          status: { $in: ['open', 'full'] },
+        }).distinct('_id'),
+      },
+    })
+    if (conflictingBooking) {
+      return Response.json(
+        { error: 'You already have a confirmed booking for this date and direction' },
+        { status: 409 }
+      )
+    }
+
+    // Check for existing booking on this specific ride
     const existing = await Booking.findOne({
       rideId: id,
       riderId: user.userId,
