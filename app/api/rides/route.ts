@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server'
 import { connectDB } from '@/lib/db'
 import Ride from '@/lib/models/ride'
 import Booking from '@/lib/models/booking'
+import '@/lib/models/user'
 import { getCurrentUser } from '@/lib/auth'
 
 /** GET /api/rides?date=YYYY-MM-DD&direction=to_office|from_office&stop=Bandra */

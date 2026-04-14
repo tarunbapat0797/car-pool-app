@@ -18,14 +18,18 @@ if (!globalWithMongoose._mongooseConn) {
 }
 
 export async function connectDB(): Promise<typeof mongoose> {
-  if (globalWithMongoose._mongooseConn) {
+  // readyState 1 = connected; reuse the cached connection only if still live
+  if (globalWithMongoose._mongooseConn && mongoose.connection.readyState === 1) {
     return globalWithMongoose._mongooseConn
   }
 
+  // Reset promise so we reconnect if the previous connection dropped
+  if (mongoose.connection.readyState === 0) {
+    globalWithMongoose._mongoosePromise = null
+  }
+
   if (!globalWithMongoose._mongoosePromise) {
-    globalWithMongoose._mongoosePromise = mongoose.connect(MONGO_DB_URI, {
-      bufferCommands: false,
-    })
+    globalWithMongoose._mongoosePromise = mongoose.connect(MONGO_DB_URI)
   }
 
   globalWithMongoose._mongooseConn = await globalWithMongoose._mongoosePromise
